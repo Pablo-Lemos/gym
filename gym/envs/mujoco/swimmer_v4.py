@@ -219,12 +219,21 @@ class SwimmerEnv(MujocoEnv, utils.EzPickle):
         noise_low = -self._reset_noise_scale
         noise_high = self._reset_noise_scale
 
-        qpos = self.init_qpos + self.np_random.uniform(
-            low=noise_low, high=noise_high, size=self.model.nq
-        )
-        qvel = self.init_qvel + self.np_random.uniform(
-            low=noise_low, high=noise_high, size=self.model.nv
-        )
+        alphas_pos = np.random.uniform(low=0, high=1, size=self.init_qpos.shape)
+        alphas_vel = np.random.uniform(low=0, high=1, size=self.init_qvel.shape)
+        boundary = 0.99
+
+        qpos = self.init_qpos + np.array((alphas_pos < boundary), dtype=int) * self.np_random.uniform(
+            low=noise_low, high=noise_high, size=self.model.nq) + np.array((alphas_pos >= boundary), dtype=int) * self.np_random.normal(
+            0, 0.01, size=self.model.nq)
+        qvel = self.init_qvel + np.array((alphas_vel < boundary), dtype=int) * self.np_random.uniform(
+            low=noise_low, high=noise_high, size=self.model.nv) + np.array((alphas_vel >= boundary), dtype=int) * self.np_random.normal(
+            0, 0.01, size=self.model.nv)
+
+        # qpos = self.init_qpos + self.np_random.uniform(
+        #     low=noise_low, high=noise_high, size=self.model.nq)
+        # qvel = self.init_qvel + self.np_random.uniform(
+        #     low=noise_low, high=noise_high, size=self.model.nv)
 
         self.set_state(qpos, qvel)
         self.current_time = np.zeros(1)
