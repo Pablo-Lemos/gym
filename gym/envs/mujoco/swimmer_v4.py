@@ -160,11 +160,11 @@ class SwimmerEnv(MujocoEnv, utils.EzPickle):
         )
         if exclude_current_positions_from_observation:
             observation_space = Box(
-                low=-np.inf, high=np.inf, shape=(8,), dtype=np.float64
+                low=-np.inf, high=np.inf, shape=(9,), dtype=np.float64
             )
         else:
             observation_space = Box(
-                low=-np.inf, high=np.inf, shape=(10,), dtype=np.float64
+                low=-np.inf, high=np.inf, shape=(11,), dtype=np.float64
             )
         MujocoEnv.__init__(
             self, "swimmer.xml", 4, observation_space=observation_space, **kwargs
@@ -178,6 +178,7 @@ class SwimmerEnv(MujocoEnv, utils.EzPickle):
         xy_position_before = self.data.qpos[0:2].copy()
         self.do_simulation(action, self.frame_skip)
         xy_position_after = self.data.qpos[0:2].copy()
+        self.current_time += 1
 
         xy_velocity = (xy_position_after - xy_position_before) / self.dt
         x_velocity, y_velocity = xy_velocity
@@ -211,7 +212,7 @@ class SwimmerEnv(MujocoEnv, utils.EzPickle):
         if self._exclude_current_positions_from_observation:
             position = position[2:]
 
-        observation = np.concatenate([position, velocity]).ravel()
+        observation = np.concatenate([position, velocity, self.current_time]).ravel()
         return observation
 
     def reset_model(self):
@@ -226,6 +227,7 @@ class SwimmerEnv(MujocoEnv, utils.EzPickle):
         )
 
         self.set_state(qpos, qvel)
+        self.current_time = np.zeros(1)
 
         observation = self._get_obs()
         return observation
