@@ -129,7 +129,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
 
     def __init__(self, **kwargs):
         utils.EzPickle.__init__(self, **kwargs)
-        observation_space = Box(low=-np.inf, high=np.inf, shape=(11,), dtype=np.float64)
+        observation_space = Box(low=-np.inf, high=np.inf, shape=(12,), dtype=np.float64)
         MujocoEnv.__init__(
             self, "reacher.xml", 2, observation_space=observation_space, **kwargs
         )
@@ -139,6 +139,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
         reward_dist = -np.linalg.norm(vec)
         reward_ctrl = -np.square(a).sum()
         reward = reward_dist + reward_ctrl
+        self.current_time += 1
 
         self.do_simulation(a, self.frame_skip)
         if self.render_mode == "human":
@@ -172,6 +173,7 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
         )
         qvel[-2:] = 0
         self.set_state(qpos, qvel)
+        self.current_time = np.zeros(1)
         return self._get_obs()
 
     def _get_obs(self):
@@ -183,5 +185,6 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
                 self.data.qpos.flat[2:],
                 self.data.qvel.flat[:2],
                 self.get_body_com("fingertip") - self.get_body_com("target"),
+                self.current_time
             ]
         )
