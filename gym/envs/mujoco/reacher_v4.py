@@ -159,18 +159,27 @@ class ReacherEnv(MujocoEnv, utils.EzPickle):
         self.viewer.cam.trackbodyid = 0
 
     def reset_model(self):
-        qpos = (
-            self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq)
-            + self.init_qpos
-        )
+        alphas_pos = np.random.uniform(low=0, high=1, size=self.init_qpos.shape)
+        alphas_vel = np.random.uniform(low=0, high=1, size=self.init_qvel.shape)
+        boundary = 0.99
+        # qpos = (
+        #     self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq)
+        #     + self.init_qpos
+        # )
+        qpos = self.init_qpos + np.array((alphas_pos < boundary), dtype=int) * self.np_random.uniform(
+            low=-0.1, high=0.1, size=self.model.nq) + np.array((alphas_pos >= boundary), dtype=int) * self.np_random.normal(
+            0, 0.01, size=self.model.nq)
         while True:
             self.goal = self.np_random.uniform(low=-0.2, high=0.2, size=2)
             if np.linalg.norm(self.goal) < 0.2:
                 break
         qpos[-2:] = self.goal
-        qvel = self.init_qvel + self.np_random.uniform(
-            low=-0.005, high=0.005, size=self.model.nv
-        )
+        # qvel = self.init_qvel + self.np_random.uniform(
+        #     low=-0.005, high=0.005, size=self.model.nv
+        # )
+        qvel = self.init_qvel + np.array((alphas_vel < boundary), dtype=int) * self.np_random.uniform(
+            low=-0.005, high=0.005, size=self.model.nv) + np.array((alphas_vel >= boundary), dtype=int) * self.np_random.normal(
+            0, 0.01, size=self.model.nv)
         qvel[-2:] = 0
         self.set_state(qpos, qvel)
         self.current_time = np.zeros(1)
